@@ -27,7 +27,7 @@ public class Ticket {
     @Column(name = "section")
     private String section;
     @Column(name = "seat")
-    private String seat;
+    private int seat;
     
     public Ticket(String toLocation,String fromLocation, String userName, String userEmail, double pricePaid) {
         this.toLocation = toLocation;
@@ -66,7 +66,7 @@ public class Ticket {
     public void setSection(String section) {
         this.section = section;
     }
-    public void setSeat(String seat) {
+    public void setSeat(int seat) {
         this.seat = seat;
     }
     public String getToLocation() {
@@ -84,7 +84,7 @@ public class Ticket {
     public String getSection() {
         return section;
     }
-    public String getSeat() {
+    public int getSeat() {
         return seat;
     }
     

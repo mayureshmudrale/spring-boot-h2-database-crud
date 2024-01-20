@@ -1,10 +1,13 @@
 package com.bezkoder.spring.jpa.h2.service;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -21,8 +24,17 @@ public class TicketService {
     private TicketRepository ticketRepository;
 
     private Map<String, Integer> seatsPerSection = new HashMap<>();
-    private Map<String,ArrayList<Integer>> seatsallocation = new HashMap<>();
+    int[] arrayA = new int[20] ;
+    int[] arrayB = new int[20] ;
+    private Map<String,int[]> seatsallocation = new HashMap<>();
     
+
+    
+
+    public TicketService() {
+        seatsallocation.put("A", arrayA);
+        seatsallocation.put("B", arrayB);
+    }
 
     public Ticket bookTicket(String userName, String userEmail, double pricePaid,String toLocation,String fromLocation) {
         // Implement logic to allocate seat and save the ticket to the database
@@ -74,9 +86,15 @@ public class TicketService {
         return null;
     }
 
-    private String generateSeatNumber(String section) {
+    private int generateSeatNumber(String section) {
         // Dummy logic to generate a seat number based on the section
-        return section + seatsPerSection.get(section);
+        List<Integer> zeroIndexex = IntStream.range(0, 19)
+        .filter(i->seatsallocation.get(section)[i]==0)
+        .boxed()
+        .collect(Collectors.toList());
+         
+        
+        return   zeroIndexex.get(new Random().nextInt(zeroIndexex.size()));
     }
 
      public List<Ticket> getTicketsBySection(String section) {
@@ -98,8 +116,30 @@ public class TicketService {
 
     public boolean deleteTicketbyid(Long id) {
         List<Ticket> ticket = getTicketsById(id);
+        Ticket ticket2 = ticket.get(0);
+        String section= ticket2.getSection();
+        List<Integer> Indexex = IntStream.range(0, 19)
+        .filter(i->seatsallocation.get(section)[i]==id)
+        .boxed()
+        .collect(Collectors.toList());
+
+        // Check if there are available seats in section B
         if(ticket!=null){
             try{
+                if (section=="A") {
+                    seatsPerSection.put("A", seatsPerSection.get("A") - 1);
+                    int []  array = seatsallocation.get(section);
+                    array[Indexex.get(0)]=0;
+                    seatsallocation.put(section,array);
+                   
+                }
+                if (section=="B") {
+                    seatsPerSection.put("B", seatsPerSection.get("B") - 1);
+                    int []  array = seatsallocation.get(section);
+                    array[Indexex.get(0)]=0;
+                    seatsallocation.put(section,array);
+                   
+                }
                 ticketRepository.deleteById(id);
             }
             catch(Exception e){
@@ -116,19 +156,27 @@ public class TicketService {
         
     }
 
-    // public Ticket updateTicket(Long id,Ticket ticket){
-    //     Optional<Ticket> ticketData = ticketRepository.findById(id);
+    public Ticket updateTicket(Long id,Ticket ticket){
+        Optional<Ticket> ticketData = ticketRepository.findById(id);
+        
+        if(ticketData.isPresent()){
+            Ticket ticket2 = ticketData.get();
+            List<Integer> zeroIndexex = IntStream.range(0, 19)
+            .filter(i->seatsallocation.get(ticket.getSection())[i]==0)
+            .boxed()
+            .collect(Collectors.toList());
+            if(zeroIndexex.contains(ticket.getSeat())){
+                ticket2.setSeat(ticket.getSeat());
+                ticketRepository.save(ticket2); 
+                return ticket2;
+            }
+            
+            
+        }
 
-    //     if(ticketData.isPresent()){
-    //         Ticket ticket2 = ticketData.get();
-    //         ticket2.setSeat(generateSeatNumber(allocateSection()));
-    //         ticketRepository.save(ticket2);
-    //         return ticket2;
-    //     }
 
-
-    //     return null;
-    // }
+        return null;
+    }
     
     
     
